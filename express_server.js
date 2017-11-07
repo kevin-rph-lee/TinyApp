@@ -53,14 +53,11 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   var shortURL = req.params.shortURL;
-  for(var url in urlDatabase){
-    if(shortURL === url){
-      console.log('Found it!: ' + url);
-      console.log(urlDatabase[shortURL]);
-      res.redirect(urlDatabase[shortURL]);
-    }
+  if(urlDatabase[shortURL] !== undefined){
+    res.redirect(urlDatabase[shortURL]);
+  } else {
+    res.status(404).send('Not found!');
   }
-  res.status(404);
 });
 
 app.get("/urls/:id", (req, res) => {
