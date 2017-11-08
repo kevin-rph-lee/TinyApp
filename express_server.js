@@ -55,6 +55,9 @@ app.get("/urls/:id", (req, res) => {
   });
 });
 
+app.get("/register", (req, res) => {
+  res.render('urls_register');
+});
 
 app.post("/login", (req, res) => {
   res.cookie('username', req.body.Username);
