@@ -5,8 +5,7 @@ var PORT = process.env.PORT || 8080; // default port 8080
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.set("view engine", "ejs")
-
+app.set("view engine", "ejs");
 
 function generateRandomString() {
   var text = "";
@@ -43,12 +42,24 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
+app.post("/urls/:id", (req, res) => {
+  urlDatabase[req.params.id] = req.body.updateURL;
+  res.redirect('/urls/');
+});
+
 app.post("/urls", (req, res) => {
   var ran = generateRandomString();
   urlDatabase[ran] = req.body['longURL'];
   console.log(urlDatabase);  // debug statement to see POST parameters
-  res.redirect('/urls/' + ran);         // Respond with 'Ok' (we will replace this)
+  res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
 });
+
+app.post("/urls/:id/delete", (req, res) => {
+  console.log(req.params.id);
+  delete urlDatabase[req.params.id];
+  res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
+});
+
 
 
 app.get("/u/:shortURL", (req, res) => {
@@ -66,7 +77,6 @@ app.get("/urls/:id", (req, res) => {
     shortURL: req.params.id
   });
 });
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

@@ -6,5 +6,11 @@
 <body>
   <%- include('partials/_header') %>
   <p><%= shortURL + ' : ' + urls[shortURL] %></p>
+  <form action="/urls/<%= shortURL%>" method="POST">
+    <input id="updateURL" type="text" name= updateURL placeholder="http://" style="width: 300px">      <input type="submit" value="Update">
+  </form>
+  <form action="/urls" method="GET" style="margin-top: 50px;">
+    <input type="submit" value="Cancel">
+  </form>
 </body>
 </html>
