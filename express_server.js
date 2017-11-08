@@ -68,17 +68,29 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   var userID = generateRandomString();
+  var dup = false;
+  for(var user in users){
+    console.log('Checking: ' + user + ' value ' + users[user].email);
+    console.log('input: ' + req.body.email);
+    if(req.body.email === users[user].email){
+      console.log("duplicate!");
+      console.log(users);
+      dup = true;
+    }
+  }
+
   if(req.body.email.length === 0 || req.body.password === 0){
-    res.status(404).send('No fields can be blank!');
+    res.status(400).send('No fields can be blank!');
+  } else if(dup === true){
+    res.status(400).send('User already exists!');
   } else {
     users[userID] = {
      id: userID,
      email: req.body.email,
      password: req.body.password
-   }
-   res.cookie('user_id', userID);
-   console.log(res.cookie);
-   res.redirect('/urls');
+    }
+    res.cookie('user_id', userID);
+    res.redirect('/urls');
   }
 });
 
