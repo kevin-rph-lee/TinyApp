@@ -37,15 +37,32 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  res.render("urls_index", { urls: urlDatabase});
+  res.render("urls_index", {
+    urls: urlDatabase,
+    username: req.cookies["username"]});
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  res.render("urls_new", {username: req.cookies["username"]});
 });
 
+
+app.get("/urls/:id", (req, res) => {
+  res.render("urls_show", {
+    urls: urlDatabase,
+    shortURL: req.params.id,
+    username: req.cookies["username"]
+  });
+});
+
+
 app.post("/login", (req, res) => {
-  res.cookie('user', req.body.Username);
+  res.cookie('username', req.body.Username);
+  res.redirect('/urls');
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie('username');
   res.redirect('/urls');
 });
 
@@ -78,12 +95,7 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-app.get("/urls/:id", (req, res) => {
-  res.render("urls_show", {
-    urls: urlDatabase,
-    shortURL: req.params.id
-  });
-});
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
