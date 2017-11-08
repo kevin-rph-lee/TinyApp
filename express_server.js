@@ -24,6 +24,14 @@ var urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
+const users = {
+  "123": {
+    id: "123",
+    email: "admin@tinyapp.com",
+    password: "gofuckyourself"
+  }
+};
+
 app.get("/", (req, res) => {
   res.end("Hello!");
 });
@@ -46,7 +54,6 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", {username: req.cookies["username"]});
 });
 
-
 app.get("/urls/:id", (req, res) => {
   res.render("urls_show", {
     urls: urlDatabase,
@@ -57,6 +64,22 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/register", (req, res) => {
   res.render('urls_register');
+});
+
+app.post("/register", (req, res) => {
+  var userID = generateRandomString();
+  if(req.body.email.length === 0 || req.body.password === 0){
+    res.status(404).send('No fields can be blank!');
+  } else {
+    users[userID] = {
+     id: userID,
+     email: req.body.email,
+     password: req.body.password
+   }
+   res.cookie('user_id', userID);
+   console.log(res.cookie);
+   res.redirect('/urls');
+  }
 });
 
 app.post("/login", (req, res) => {
