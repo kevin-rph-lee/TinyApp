@@ -8,19 +8,19 @@
     <tr>
       <th>Short Name</th>
       <th>Long Name</th>
-      <th>Delete</th>
-      <th>Update</th>
+      <th>Delete URL</th>
+      <th>Update URL</th>
     </tr>
   <%- include('partials/_header') %>
   <% for(var url in urls) { %>
     <tr>
       <th><%= url %></th>
-      <th><%= urls[url] %></th>
+      <th><a href="http://localhost:8080/u/<%= url %>"><%= urls[url] %></a></th>
       <th>
-       <form method="POST" action="/urls/<%= url %>/delete"><input type="submit" name = deleteURL value="Delete URL"></form>
+       <form method="POST" action="/urls/<%= url %>/delete"><input type="submit" name = deleteURL value="Delete"></form>
       </th>
       <th>
-        <form action="/urls/<%= url %>/" method="GET"><input type="submit" value="Update URL"></form>
+        <form action="/urls/<%= url %>/" method="GET"><input type="submit" value="Update"></form>
       </th>
     </tr>
   <% } %>
