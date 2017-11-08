@@ -45,20 +45,35 @@ app.get("/hello", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  var id = req.cookies["user_id"];
+  console.log(users[req.cookies["user_id"]]);
   res.render("urls_index", {
     urls: urlDatabase,
-    username: req.cookies["username"]});
+    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]]
+  });
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new", {username: req.cookies["username"]});
+  res.render("urls_new", {
+    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]]
+  });
+});
+
+app.get("/login", (req, res) => {
+  res.render("urls_login", {
+    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]]
+  });
 });
 
 app.get("/urls/:id", (req, res) => {
   res.render("urls_show", {
     urls: urlDatabase,
     shortURL: req.params.id,
-    username: req.cookies["username"]
+    username: req.cookies["username"],
+    user: users[req.cookies["user_id"]]
   });
 });
 
@@ -69,19 +84,16 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   var userID = generateRandomString();
   var dup = false;
-  for(var user in users){
+  for (var user in users){
     console.log('Checking: ' + user + ' value ' + users[user].email);
     console.log('input: ' + req.body.email);
-    if(req.body.email === users[user].email){
-      console.log("duplicate!");
-      console.log(users);
+    if (req.body.email === users[user].email){
       dup = true;
     }
   }
-
-  if(req.body.email.length === 0 || req.body.password === 0){
+  if (req.body.email.length === 0 || req.body.password === 0){
     res.status(400).send('No fields can be blank!');
-  } else if(dup === true){
+  } else if (dup === true){
     res.status(400).send('User already exists!');
   } else {
     users[userID] = {
