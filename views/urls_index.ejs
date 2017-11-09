@@ -3,34 +3,14 @@
 <head>
   <title>TinyApp</title>
 </head>
-<body>
-  <table>
-    <tr>
-      <th>Short Name</th>
-      <th>Long Name</th>
-      <th>Delete URL</th>
-      <th>Update</th>
-      <th>Date Created</th>
-      <th>Times Visited</th>
-    </tr>
-  <%- include('partials/_header') %>
-  <% for(var url in urls) { %>
-    <tr>
-      <th><%= url %></th>
-      <th><a href="http://localhost:8080/u/<%= url %>"><%= urls[url].longURL %></a></th>
-      <th>
-       <form method="POST" action="/urls/<%= url %>/delete"><input type="submit" name = deleteURL value="Delete"></form>
-      </th>
-      <th>
-        <form action="/urls/<%= url %>/" method="GET"><input type="submit" value="Edit"></form>
-      </th>
-      <th><%= urls[url].date %></th>
-      <th><%= urls[url].visited %></th>
-    </tr>
-  <% } %>
-  </table>
-  <form action="/urls/new" method="GET">
-    <input type="submit" value="Add URL">
-  </form>
-</body>
+  <body>
+    <header>
+      <%- include('partials/_header') %>
+    </header>
+    <% if (user === undefined){ %>
+     <h2>Please login to see your shortened URLS</h2>
+    <% } else { %>
+     <%- include('partials/_urlsdisplay') %>
+    <% } %>
+  </body>
 </html>

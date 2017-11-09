@@ -22,24 +22,27 @@ const password = "purple-monkey-dinosaur"; // you will probably this from req.pa
 const hashedPassword = bcrypt.hashSync(password, 10);
 
 
-
+//Database of URLS in system
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     owner: '123',
     visited: 0,
-    date: '4-12-2011'
+    date: '4-12-2011',
+    visitors: []
   },
 
   "9sm5xK": {
     longURL: "http://google.ca",
     owner: '123',
     visited: 0,
-    date: '1-3-2043'
+    date: '1-3-2043',
+    visitors: []
   }
 
 };
 
+//Database of Users in teh system
 const users = {
   "123": {
     id: "123",
@@ -54,7 +57,10 @@ const users = {
 };
 
 
-
+/**
+ * Generates a random string 6 characters long
+ * @return {string} random string 6 characters long
+ */
 function generateRandomString() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -65,6 +71,11 @@ function generateRandomString() {
   return text;
 }
 
+/**
+ * Filters out the DB so it returns only URLs owned by the user
+ * @param  {string} id UserID of user whom you want the URLS owned by
+ * @return {obj}    DB of URLS owned by that particular user
+ */
 function urlsForUser(id){
   let urlDatabaseForUser = {};
   for(var url in urlDatabase){
@@ -75,21 +86,36 @@ function urlsForUser(id){
   return urlDatabaseForUser
 }
 
+/**
+ * Checks if a use exists in the DB
+ * @param  {string} email email to check if it exists
+ * @param  {obj} users usersDB
+ * @return {boolean}       Returns true if user already exists, false otherwise
+ */
+function userExists(email, users){
+  for (var user in users){
+    if (email === users[user].email){
+      return true;
+    }
+  }
+  return dup;
+}
+
+
+function userAlreadyVisitedURL(email, url){
+
+}
+
+//middleware to check if they are logged in
+
+
 
 app.get("/", (req, res) => {
-  if(req.session.user_id === undefined){
+  if(!req.session.user_id){
     res.redirect('/login');
   } else {
     res.redirect('/urls');
   }
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
-app.get("/hello", (req, res) => {
-  res.end("<html><body>Hello <b>World</b></body></html>\n");
 });
 
 app.get("/urls", (req, res) => {
@@ -122,38 +148,46 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-
-  res.render("urls_show", {
-    urls: urlDatabase,
-    shortURL: req.params.id,
-    user: users[req.session.user_id]
-  });
+  if(urlDatabase[req.params.id] === undefined){
+    res.sendStatus(404);
+  } else if(urlDatabase[req.params.id].owner !== req.session.user_id || req.session.user_id === undefined){
+    res.sendStatus(403);
+  } else {
+    res.render("urls_show", {
+     urls: urlDatabase,
+     shortURL: req.params.id,
+     user: users[req.session.user_id]
+   });
+  }
 });
 
 app.get("/register", (req, res) => {
   res.render('urls_register');
 });
 
+
+
+app.get("/u/:shortURL", (req, res) => {
+  var shortURL = req.params.shortURL;
+  if(urlDatabase[shortURL] === undefined){
+    res.status(404).send('Not found!');
+  } else {
+    urlDatabase[shortURL].visited ++ ;
+  res.redirect(urlDatabase[shortURL].longURL);
+  }
+});
+
 app.post("/register", (req, res) => {
   var userID = generateRandomString();
-  var dup = false;
-
-  for (var user in users){
-    console.log('Checking: ' + user + ' value ' + users[user].email);
-    console.log('input: ' + req.body.email);
-    if (req.body.email === users[user].email){
-      dup = true;
-    }
-  }
-
+  var email = req.body.email.toLowerCase();
   if (req.body.email.length === 0 || req.body.password === 0){
     res.sendStatus(400);
-  } else if (dup === true){
+  } else if(userExists(email, users)){
     res.sendStatus(400);
   } else {
     users[userID] = {
      id: userID,
-     email: req.body.email,
+     email: email,
      password: bcrypt.hashSync(req.body.password, 10)
     }
     req.session.user_id = userID;
@@ -162,13 +196,10 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  console.log(req.body.email);
-  console.log(req.body.password);
-
   for (var user in users){
     console.log('Checking: ' + user + ' value ' + users[user].email);
     console.log('input: ' + req.body.email);
-    if (req.body.email === users[user].email){
+    if (req.body.email.toLowerCase() === users[user].email){
       if (bcrypt.compareSync(req.body.password, users[user].password)){
         req.session.user_id = users[user].id;
         res.redirect('/urls');
@@ -198,10 +229,11 @@ app.post("/urls", (req, res) => {
     longURL: req.body['longURL'],
     owner: req.session.user_id,
     visited: 0,
-    date: date.getDate() + '-' + date.getMonth() + '-' + date.getFullYear()
+    date: date.getDate() + '-' + date.getMonth() + '-' + date.getFullYear(),
+    visitors: []
   };
-  console.log(urlDatabase);  // debug statement to see POST parameters
-  res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
+  console.log(urlDatabase);
+  res.redirect('/urls/');
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -209,19 +241,6 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
 });
-
-
-
-app.get("/u/:shortURL", (req, res) => {
-  var shortURL = req.params.shortURL;
-  if(urlDatabase[shortURL] === undefined){
-    res.status(404).send('Not found!');
-  } else {
-    urlDatabase[shortURL].visisted ++;
-    res.redirect(urlDatabase[shortURL].longURL);
-  }
-});
-
 
 
 app.listen(PORT, () => {

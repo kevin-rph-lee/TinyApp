@@ -7,7 +7,7 @@
   <header>
     <%- include('partials/_header') %>
   </header>
-  <p><%= shortURL + ' : ' + urls[shortURL] %></p>
+  <p><%= shortURL + ' : ' + urls[shortURL].longURL %></p>
   <form action="/urls/<%= shortURL%>" method="POST">
     <input id="updateURL" type="text" name= updateURL placeholder="http://" style="width: 300px">      <input type="submit" value="Update">
   </form>
