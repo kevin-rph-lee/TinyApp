@@ -9,6 +9,12 @@ app.use(cookieParser());
 
 app.set("view engine", "ejs");
 
+
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; // you will probably this from req.params
+const hashedPassword = bcrypt.hashSync(password, 10);
+
+
 function generateRandomString() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -97,7 +103,7 @@ app.post("/register", (req, res) => {
     users[userID] = {
      id: userID,
      email: req.body.email,
-     password: req.body.password
+     password: bcrypt.hashSync(req.body.password, 10)
     }
     res.cookie('user_id', userID);
     res.redirect('/urls');
@@ -112,7 +118,7 @@ app.post("/login", (req, res) => {
     console.log('Checking: ' + user + ' value ' + users[user].email);
     console.log('input: ' + req.body.email);
     if (req.body.email === users[user].email){
-      if(req.body.password === users[user].password){
+      if (bcrypt.compareSync(req.body.password, users[user].password)){
         res.cookie('user_id', users[user].id);
         res.redirect('/urls');
       } else {
