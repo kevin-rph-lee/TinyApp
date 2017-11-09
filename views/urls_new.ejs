@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head></head>
+  <head><title>Add new URL</title></head>
   <body style="font-size:20px; padding:50px;">
-    <% include partials/_header %>
+  <header>
+      <% include partials/_header %>
+  </header>
     <form action="/urls" method="POST" style="margin: 150px 150px 50px 150px;">
       <label for="longURL">Enter a URL:</label>
       <input id="longURL" type="text" name="longURL" placeholder="http://" value='http://' style="width: 300px">

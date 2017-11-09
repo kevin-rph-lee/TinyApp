@@ -49,21 +49,18 @@ app.get("/urls", (req, res) => {
   console.log(users[req.cookies["user_id"]]);
   res.render("urls_index", {
     urls: urlDatabase,
-    username: req.cookies["username"],
     user: users[req.cookies["user_id"]]
   });
 });
 
 app.get("/urls/new", (req, res) => {
   res.render("urls_new", {
-    username: req.cookies["username"],
     user: users[req.cookies["user_id"]]
   });
 });
 
 app.get("/login", (req, res) => {
   res.render("urls_login", {
-    username: req.cookies["username"],
     user: users[req.cookies["user_id"]]
   });
 });
@@ -72,7 +69,6 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", {
     urls: urlDatabase,
     shortURL: req.params.id,
-    username: req.cookies["username"],
     user: users[req.cookies["user_id"]]
   });
 });
@@ -84,6 +80,7 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   var userID = generateRandomString();
   var dup = false;
+
   for (var user in users){
     console.log('Checking: ' + user + ' value ' + users[user].email);
     console.log('input: ' + req.body.email);
@@ -91,10 +88,11 @@ app.post("/register", (req, res) => {
       dup = true;
     }
   }
+
   if (req.body.email.length === 0 || req.body.password === 0){
-    res.status(400).send('No fields can be blank!');
+    res.sendStatus(400);
   } else if (dup === true){
-    res.status(400).send('User already exists!');
+    res.sendStatus(400);
   } else {
     users[userID] = {
      id: userID,
@@ -107,12 +105,26 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.Username);
-  res.redirect('/urls');
+  console.log(req.body.email);
+  console.log(req.body.password);
+
+  for (var user in users){
+    console.log('Checking: ' + user + ' value ' + users[user].email);
+    console.log('input: ' + req.body.email);
+    if (req.body.email === users[user].email){
+      if(req.body.password === users[user].password){
+        res.cookie('user_id', users[user].id);
+        res.redirect('/urls');
+      } else {
+        res.sendStatus(403);
+      }
+    }
+  }
+  res.sendStatus(403);
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   res.redirect('/urls');
 });
 
