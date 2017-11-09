@@ -9,9 +9,10 @@
   </header>
   <p><%= shortURL + ' : ' + urls[shortURL].longURL %></p>
   <form action="/urls/<%= shortURL%>" method="POST">
-    <input id="updateURL" type="text" name= updateURL placeholder="http://" style="width: 300px">      <input type="submit" value="Update">
+    <input id="updateURL" type="text" name= updateURL placeholder="http://">
+    <input type="submit" value="Update">
   </form>
-  <form action="/urls" method="GET" style="margin-top: 50px;">
+  <form action="/urls" method="GET">
     <input type="submit" value="Cancel">
   </form>
 </body>

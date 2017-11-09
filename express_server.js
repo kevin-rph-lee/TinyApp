@@ -4,8 +4,10 @@ const PORT = process.env.PORT || 8080; // default port 8080
 const cookieSession = require('cookie-session');
 
 const bodyParser = require("body-parser");
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; // you will probably this from req.params
+const hashedPassword = bcrypt.hashSync(password, 10);
 app.use(bodyParser.urlencoded({extended: true}));
-
 app.use(cookieSession({
   name: 'session',
   keys: ['key1', 'key2'],
@@ -15,11 +17,6 @@ app.use(cookieSession({
 }))
 
 app.set("view engine", "ejs");
-
-
-const bcrypt = require('bcrypt');
-const password = "purple-monkey-dinosaur"; // you will probably this from req.params
-const hashedPassword = bcrypt.hashSync(password, 10);
 
 
 //Database of URLS in system
@@ -56,7 +53,6 @@ const users = {
   }
 };
 
-
 /**
  * Generates a random string 6 characters long
  * @return {string} random string 6 characters long
@@ -64,7 +60,6 @@ const users = {
 function generateRandomString() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-
   for (var i = 0; i <= 5; i++){
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
@@ -101,15 +96,6 @@ function userExists(email, users){
   return dup;
 }
 
-
-function userAlreadyVisitedURL(email, url){
-
-}
-
-//middleware to check if they are logged in
-
-
-
 app.get("/", (req, res) => {
   if(!req.session.user_id){
     res.redirect('/login');
@@ -118,9 +104,10 @@ app.get("/", (req, res) => {
   }
 });
 
+
 app.get("/urls", (req, res) => {
   var id = req.session.user_id;
-  console.log(urlDatabase);
+  //to debug urlDatabase: console.log(urlDatabase);
   res.render("urls_index", {
     urls: urlsForUser(req.session.user_id),
     user: users[req.session.user_id]
@@ -128,7 +115,7 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if(req.session.user_id === undefined){
+  if(!req.session.user_id){
     res.redirect('/login');
   } else {
     res.render("urls_new", {
@@ -137,8 +124,9 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
+//Opens login page if not already logged in
 app.get("/login", (req, res) => {
-  if(req.session.user_id === undefined){
+  if(!req.session.user_id){
     res.render("urls_login", {
       user: users[req.session.user_id]
     });
@@ -147,7 +135,9 @@ app.get("/login", (req, res) => {
   }
 });
 
+//Page to update the long URL
 app.get("/urls/:id", (req, res) => {
+  //sends errors if page doesn't exist or if the user is not the owner of the page
   if(urlDatabase[req.params.id] === undefined){
     res.sendStatus(404);
   } else if(urlDatabase[req.params.id].owner !== req.session.user_id || req.session.user_id === undefined){
@@ -165,14 +155,16 @@ app.get("/register", (req, res) => {
   res.render('urls_register');
 });
 
-
-
 app.get("/u/:shortURL", (req, res) => {
   var shortURL = req.params.shortURL;
   if(urlDatabase[shortURL] === undefined){
     res.status(404).send('Not found!');
   } else {
     urlDatabase[shortURL].visited ++ ;
+    if(urlDatabase[shortURL].visitors.indexOf(req.session.user_id) === -1){
+      console.log('new visitor!');
+      urlDatabase[shortURL].visitors.push(req.session.user_id);
+    }
   res.redirect(urlDatabase[shortURL].longURL);
   }
 });
@@ -217,7 +209,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id] = req.body.updateURL;
+  urlDatabase[req.params.id].longURL = req.body.updateURL;
   res.redirect('/urls/');
 });
 
@@ -239,7 +231,7 @@ app.post("/urls", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   console.log(req.params.id);
   delete urlDatabase[req.params.id];
-  res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
+  res.redirect('/urls/');
 });
 
 
