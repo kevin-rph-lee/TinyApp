@@ -38,11 +38,13 @@ const users = {
   "123": {
     id: "123",
     email: "admin@ll.com",
+    //plain password intentionally shown for testing purposes
     password: bcrypt.hashSync('peerVue', 10)
   },
   "324": {
     id: "324",
     email: "user@ll.com",
+    //plain password intentionally shown for testing purposes
     password: bcrypt.hashSync('peerVue', 10)
   }
 };
@@ -81,13 +83,13 @@ function urlsForUser(id){
  * @param  {obj} users usersDB
  * @return {boolean}       Returns true if user already exists, false otherwise
  */
-function userExists(email, users){
+function getUser(email, users){
   for (let user in users){
     if (email === users[user].email){
-      return true;
+      return users[user];
     }
   }
-  return false;
+  return undefined;
 }
 
 /**
@@ -110,12 +112,10 @@ app.get("/", (req, res) => {
 
 //Main page which shows all of the short URL's that the user owns
 app.get("/urls", (req, res) => {
-  console.log(users);
-  const { user_ID } = req.session;
   //to debug urlDatabase: console.log(urlDatabase);
   res.render("urls_index", {
-    urls: urlsForUser(user_ID),
-    user: users[user_ID]
+    urls: urlsForUser(req.session.user_id),
+    user: users[req.session.user_id]
   });
 });
 
@@ -173,7 +173,6 @@ app.get("/u/:shortURL", (req, res) => {
     //increments the visitor counter and if the visistor is unique will add the visitor within the url object
     urlDatabase[shortURL].visited ++ ;
     if(checkNewVisistor(urlDatabase[shortURL].visitors, req.session.user_id)){
-      console.log('new visitor!');
       urlDatabase[shortURL].visitors.push(req.session.user_id);
     }
     res.redirect(urlDatabase[shortURL].longURL);
@@ -188,7 +187,7 @@ app.post("/register", (req, res) => {
   if (req.body.email.length === 0 || req.body.password.length === 0){
     res.sendStatus(400);
     //Checks if user exists
-  } else if(userExists(email, users)){
+  } else if(getUser(email, users)){
     res.sendStatus(400);
   } else {
     bcrypt.hash(req.body.password, 10, (err, hash) => {
@@ -197,27 +196,28 @@ app.post("/register", (req, res) => {
         email,
         password: hash
       };
-    req.session.user_id = userID;
-    res.redirect('/urls');
+      req.session.user_id = userID;
+      res.redirect('/urls');
     });
   }
 });
 
 //Logs the user into the system
 app.post("/login", (req, res) => {
-  for (let user in users){
-    //Checking if the user exists
-    if (req.body.email.toLowerCase().trim() === users[user].email){
-      //Checking if password matches what we have in the DB
-      if (bcrypt.compareSync(req.body.password, users[user].password)){
-        req.session.user_id = users[user].id;
+  const user = getUser( req.body.email , users);
+  if(user){
+    if(bcrypt.compareSync(req.body.password, user.password)){
+        req.session.user_id = user.id;
         res.redirect('/urls');
-      } else {
-        res.sendStatus(403);
-      }
+        return;
+    } else {
+      res.sendStatus(403);
+      return;
     }
+  } else {
+    res.sendStatus(403);
+    return;
   }
-  res.sendStatus(403);
 });
 
 //Logs out by knocking out the cookie session
@@ -228,8 +228,12 @@ app.post("/logout", (req, res) => {
 
 //Updates the longURL to the new one provided by the user
 app.post("/urls/:id", (req, res) => {
-  urlDatabase[req.params.id].longURL = req.body.updateURL;
-  res.redirect('/urls/');
+  if(!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].owner){
+    res.sendStatus(404);
+  } else {
+    urlDatabase[req.params.id].longURL = req.body.updateURL;
+    res.redirect('/urls/');
+  }
 });
 
 //Generates a new short URL in the URL database
@@ -251,9 +255,12 @@ app.post("/urls", (req, res) => {
 
 //Deletes the shortURL from the DB
 app.post("/urls/:id/delete", (req, res) => {
-  console.log(req.params.id);
-  delete urlDatabase[req.params.id];
-  res.redirect('/urls/');
+  if(!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].owner ){
+    res.sendStatus(404);
+  } else {
+    delete urlDatabase[req.params.id];
+    res.redirect('/urls/');
+  }
 });
 
 
