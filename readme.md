@@ -4,8 +4,8 @@ A fullstack application built with node and express. It allows users to shorten 
 
 ## Final Product
 
-![Screenshot1](sceenshot.png)
-![Screenshot2](sceenshot1.png)
+![Screenshot1](/sceenshot.png)
+![Screenshot2](/sceenshot1.png)
 
 ## Dependencies
 - Node.js
