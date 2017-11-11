@@ -13,6 +13,25 @@
     <input id="updateURL" type="text" name= updateURL placeholder="http://">
     <input type="submit" value="Update">
   </form>
+  <h3> Visitor Log </h3>
+
+
+
+  <table>
+    <tr>
+      <th>Username</th>
+      <th>Date</th>
+    </tr>
+  <% for(var i in urls[shortURL].visitorLog) { %>
+    <tr>
+      <th><%= urls[shortURL].visitorLog[i].user %></th>
+      <th><%= urls[shortURL].visitorLog[i].date %></th>
+    </tr>
+  <% } %>
+
+  </table>
+
+
   <form action="/urls" method="GET">
     <input type="submit" value="Cancel">
   </form>

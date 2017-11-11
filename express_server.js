@@ -1,10 +1,10 @@
-const express = require("express");
+const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 8080;
 const cookieSession = require('cookie-session');
-const bodyParser = require("body-parser");
+const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
-const password = "purple-monkey-dinosaur";
+const password = 'purple-monkey-dinosaur';
 const hashedPassword = bcrypt.hashSync(password, 10);
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieSession({
@@ -13,37 +13,46 @@ app.use(cookieSession({
   // Cookie Options
   maxAge: 24 * 60 * 60 * 1000
 }));
-app.set("view engine", "ejs");
+app.set('view engine', 'ejs');
 
 //Database of URLS in system
 const urlDatabase = {
-  "b2xVn2": {
-    longURL: "http://www.lighthouselabs.ca",
+  'b2xVn2': {
+    longURL: 'http://www.lighthouselabs.ca',
     owner: '123',
     visited: 0,
     date: '4-12-2011',
-    visitors: []
+    visitors: [],
+    visitorLog: [{user: 'admin@ll.com', date: '1-11-2012'}, {user: 'user@ll.com', date: '2-2-2013'}]
   },
-  "9sm5xK": {
-    longURL: "http://google.ca",
+  '9sm5xK': {
+    longURL: 'http://google.ca',
     owner: '123',
     visited: 0,
     date: '1-3-2016',
-    visitors: []
+    visitors: [],
+    visitorLog: []
   }
 };
 
 //Database of Users in the system
 const users = {
-  "123": {
-    id: "123",
-    email: "admin@ll.com",
+  '123': {
+    id: '123',
+    email: 'admin@ll.com',
     //plain password intentionally shown for testing purposes
     password: bcrypt.hashSync('peerVue', 10)
   },
-  "324": {
-    id: "324",
-    email: "user@ll.com",
+  '324': {
+    id: '324',
+    email: 'user@ll.com',
+    //plain password intentionally shown for testing purposes
+    password: bcrypt.hashSync('peerVue', 10)
+  },
+  //default unregistered user
+  '000': {
+    id: '000',
+    email: 'Unresgistered User',
     //plain password intentionally shown for testing purposes
     password: bcrypt.hashSync('peerVue', 10)
   }
@@ -54,8 +63,8 @@ const users = {
  * @return {string} random string 6 characters long
  */
 function generateRandomString() {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   for (let i = 0; i <= 5; i++){
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
@@ -78,10 +87,10 @@ function urlsForUser(id){
 }
 
 /**
- * Checks if a use exists in the DB
+ * Checks if a use exists in the DB and returns the user
  * @param  {string} email email to check if it exists
  * @param  {obj} users usersDB
- * @return {boolean}       Returns true if user already exists, false otherwise
+ * @return {obj}       Returns the user if they are in the DB (defined if they do not exist)
  */
 function getUser(email, users){
   for (let user in users){
@@ -102,7 +111,7 @@ function checkNewVisistor(visitors, userid){
   return visitors.indexOf(userid) === -1;
 }
 
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   if(!req.session.user_id){
     res.redirect('/login');
   } else {
@@ -111,30 +120,29 @@ app.get("/", (req, res) => {
 });
 
 //Main page which shows all of the short URL's that the user owns
-app.get("/urls", (req, res) => {
-  //to debug urlDatabase: console.log(urlDatabase);
-  res.render("urls_index", {
+app.get('/urls', (req, res) => {
+  res.render('urls_index', {
     urls: urlsForUser(req.session.user_id),
     user: users[req.session.user_id]
   });
 });
 
 //If logged in, shows the create new shortURL page
-app.get("/urls/new", (req, res) => {
+app.get('/urls/new', (req, res) => {
   if(!req.session.user_id){
     res.redirect('/login');
   } else {
-    res.render("urls_new", {
+    res.render('urls_new', {
       user: users[req.session.user_id]
     });
   }
 });
 
 //Opens login page if not already logged in
-app.get("/login", (req, res) => {
+app.get('/login', (req, res) => {
   const { user_ID } = req.session;
   if(!req.session.user_id){
-    res.render("urls_login", {
+    res.render('urls_login', {
       user: users[req.session.user_id]
     });
   } else {
@@ -143,29 +151,32 @@ app.get("/login", (req, res) => {
 });
 
 //Page to update the long URL
-app.get("/urls/:id", (req, res) => {
+app.get('/urls/:id', (req, res) => {
   //sends errors if page doesn't exist or if the user is not the owner of the page
   if(!urlDatabase[req.params.id]){
     res.sendStatus(404);
   } else if((!req.session.user_id) || (urlDatabase[req.params.id].owner !== req.session.user_id)){
     res.sendStatus(403);
   } else {
-    res.render("urls_show", {
+    res.render('urls_show', {
       urls: urlDatabase,
       shortURL: req.params.id,
-      user: users[req.session.user_id]
+      user: users[req.session.user_id],
+      users: users
     });
   }
 });
 
 //Registration page
-app.get("/register", (req, res) => {
+app.get('/register', (req, res) => {
   res.render('urls_register');
 });
 
 //Will redirect to the long URL
-app.get("/u/:shortURL", (req, res) => {
+app.get('/u/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
+  const date = new Date();
+  const today = date.getDate() + '-' + date.getMonth() + '-' + date.getFullYear();
   //Check to see if the short URL exists in the DB
   if(!urlDatabase[shortURL]){
     res.status(404);
@@ -175,12 +186,19 @@ app.get("/u/:shortURL", (req, res) => {
     if(checkNewVisistor(urlDatabase[shortURL].visitors, req.session.user_id)){
       urlDatabase[shortURL].visitors.push(req.session.user_id);
     }
+    //Adding to the user log of the URL
+    if(req.session.user_id === undefined){
+      urlDatabase[shortURL].visitorLog.push({user: 'Unregistered User', date: today});
+    } else{
+      urlDatabase[shortURL].visitorLog.push({user: users[req.session.user_id]['email'], date: today});
+    }
+
     res.redirect(urlDatabase[shortURL].longURL);
   }
 });
 
 //Registers a new user into the system
-app.post("/register", (req, res) => {
+app.post('/register', (req, res) => {
   const userID = generateRandomString();
   const email = req.body.email.toLowerCase().trim();
   //Checking to ensure the email and password are not empty
@@ -203,13 +221,13 @@ app.post("/register", (req, res) => {
 });
 
 //Logs the user into the system
-app.post("/login", (req, res) => {
-  const user = getUser( req.body.email , users);
-  if(user){
-    if(bcrypt.compareSync(req.body.password, user.password)){
-        req.session.user_id = user.id;
-        res.redirect('/urls');
-        return;
+app.post('/login', (req, res) => {
+  const user = getUser(req.body.email, users);
+  if (user){
+    if (bcrypt.compareSync(req.body.password, user.password)){
+      req.session.user_id = user.id;
+      res.redirect('/urls');
+      return;
     } else {
       res.sendStatus(403);
       return;
@@ -221,13 +239,13 @@ app.post("/login", (req, res) => {
 });
 
 //Logs out by knocking out the cookie session
-app.post("/logout", (req, res) => {
+app.post('/logout', (req, res) => {
   req.session = null;
   res.redirect('/urls');
 });
 
 //Updates the longURL to the new one provided by the user
-app.post("/urls/:id", (req, res) => {
+app.post('/urls/:id', (req, res) => {
   if(!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].owner){
     res.sendStatus(404);
   } else {
@@ -237,7 +255,7 @@ app.post("/urls/:id", (req, res) => {
 });
 
 //Generates a new short URL in the URL database
-app.post("/urls", (req, res) => {
+app.post('/urls', (req, res) => {
   //creating the random ID string
   const ran = generateRandomString();
   //Generating the created date of the shortURL
@@ -248,13 +266,14 @@ app.post("/urls", (req, res) => {
     owner: req.session.user_id,
     visited: 0,
     date: date.getDate() + '-' + date.getMonth() + '-' + date.getFullYear(),
-    visitors: []
+    visitors: [],
+    visitorLog: []
   };
   res.redirect('/urls/');
 });
 
 //Deletes the shortURL from the DB
-app.post("/urls/:id/delete", (req, res) => {
+app.post('/urls/:id/delete', (req, res) => {
   if(!req.session.user_id || req.session.user_id !== urlDatabase[req.params.id].owner ){
     res.sendStatus(404);
   } else {
@@ -263,7 +282,7 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
