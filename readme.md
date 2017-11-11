@@ -4,8 +4,8 @@ A fullstack application built with node and express. It allows users to shorten 
 
 ## Final Product
 
-![Screenshot1](/sceenshot.png)
-![Screenshot2](/sceenshot1.png)
+![Screenshot1](https://raw.github.com/kevin-rph-lee/TinyApp/Screenshot.PNG)
+![Screenshot2](https://raw.github.com/kevin-rph-lee/TinyApp/Screenshot2.PNG)
 
 ## Dependencies
 - Node.js
